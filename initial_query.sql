@@ -1,4 +1,4 @@
--- Cyclistic Bike Shre  Case Study: Initial Query
+-- Cyclistic Bike Share Case Study: Initial Query
 -- Count Distinct: Total Rides Per Month
 
 SELECT

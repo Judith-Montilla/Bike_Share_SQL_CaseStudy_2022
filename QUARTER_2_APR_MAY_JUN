@@ -65,7 +65,7 @@ member_casual
 from `final_bike_share_2022.JUN_2022`
 
 
--- Select columns from Quarter_2_APR_MAY_JUN.sql to preview union of tables
+-- Select columns from Quarter_2_APR_MAY_JUN to preview union of tables
 
 SELECT 
 ride_id,

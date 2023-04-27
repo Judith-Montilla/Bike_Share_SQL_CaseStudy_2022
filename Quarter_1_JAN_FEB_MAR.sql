@@ -330,7 +330,9 @@ TIME_ADD(TIME '00:00:00', INTERVAL CAST(AVG(TIME_DIFF(ride_start_time, TIME '00:
 FORMAT_TIME('%T', TIME_ADD(TIME '00:00:00', INTERVAL CAST(AVG(TIME_DIFF(ride_start_time, TIME '00:00:00', SECOND)) AS INT64) SECOND)) average_time_as_string
 FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
 group by member_casual
+
 -- Mode for end station in quarter 1: members vs casual riders
+
 SELECT
 member_casual,
 end_station_name AS mode_end_station_name

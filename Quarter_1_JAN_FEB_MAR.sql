@@ -82,7 +82,7 @@ FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
 ORDER BY
 ride_id DESC
 
--- Total trips in quarter 1: members vs casual riders
+-- Total bike trips in quarter 1: members vs casual riders
 
 SELECT
 TotalTrips,
@@ -97,7 +97,25 @@ COUNTIF(member_casual = 'member') AS TotalMemberTrips,
 COUNTIF(member_casual = 'casual') AS TotalCasualTrips,
 FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR` )
 
--- Total trips per day of week: members vs casual riders
+-- Total bike trips per month in quarter 1: members vs casual riders
+
+SELECT
+TotalTrips,
+TotalMemberTrips,
+TotalCasualTrips,
+ride_month,
+ROUND(TotalMemberTrips/TotalTrips,2)*100 AS MemberPercentage,
+ROUND(TotalCasualTrips/TotalTrips,2)*100 AS CasualPercentage
+FROM
+(SELECT
+ride_month,
+COUNT(ride_id) AS TotalTrips,
+COUNTIF(member_casual = 'member') AS TotalMemberTrips,
+COUNTIF(member_casual = 'casual') AS TotalCasualTrips,
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
+group by ride_month)
+
+-- Total bike trips per day in quarter 1: members vs casual riders
 
 SELECT
 TotalTrips,
@@ -125,7 +143,7 @@ COUNTIF(rideable_type = 'docked_bike') AS docked_bike,
 from `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
 group by member_casual
 
--- Total bike types per month in quarter 1: members vs casual riders 
+-- Total bike types per month in quarter 1: members vs casual riders
 
 SELECT
 member_casual,
@@ -136,7 +154,7 @@ COUNTIF(rideable_type = 'docked_bike') AS docked_bike,
 from `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
 group by member_casual, ride_month
 
--- Total bike types per day in quarter 1: members vs casual riders 
+-- Total bike types per day in quarter 1: members vs casual riders
 
 SELECT
 member_casual,
@@ -147,53 +165,7 @@ COUNTIF(rideable_type = 'docked_bike') AS docked_bike,
 from `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
 group by member_casual, day_of_week
 
--- Which day of the week day the most rides: members vs casual riders
-
-SELECT
-member_casual, 
-day_of_week AS mode_day_of_week 
-FROM 
-(SELECT
-DISTINCT member_casual, day_of_week, ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY COUNT(day_of_week) DESC) rn
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
-GROUP BY member_casual, day_of_week)
-WHERE
-rn = 1
-ORDER BY
-member_casual DESC 
-
--- Start station in descending order by total trips: members vs casual riders
-
-SELECT 
-DISTINCT start_station_name,
-SUM (CASE WHEN ride_id = ride_id AND start_station_name = start_station_name THEN 1 ELSE 0 END) AS total,
-SUM (CASE WHEN member_casual = 'member' AND start_station_name = start_station_name THEN 1 ELSE 0 END) AS member,
-SUM( CASE WHEN member_casual = 'casual' AND start_station_name = start_station_name THEN 1 ELSE 0 END) AS casual
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
-GROUP BY 
-start_station_name
-ORDER BY 
-total DESC
-
--- Max ride length in quarter 1: members vs casual riders
-
-SELECT
-member_casual,
-ride_length
-from `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
-where member_casual = 'member'
-order by ride_length desc
-
--- Min ride length in quarter 1: members vs casual riders 
-
-SELECT
-member_casual,
-ride_length
-from `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
-where member_casual = 'member'
-order by ride_length asc
-
---  Most used bike type in quarter 1: members vs casual riders 
+-- Mode for bike type in quarter 1: members vs casual riders
 
 SELECT
 member_casual,
@@ -207,6 +179,49 @@ WHERE
 rn = 1
 ORDER BY
 member_casual DESC
+
+-- Median for bike types in quarter 1: members vs casual riders
+
+SELECT
+DISTINCT median_bike_type,
+member_casual,
+FROM
+(SELECT ride_id, member_casual,rideable_type,
+PERCENTILE_DISC(rideable_type, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_bike_type
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
+
+-- Max ride length in quarter 1: members vs casual riders
+
+SELECT
+member_casual,
+ride_length
+from `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
+where member_casual = 'member'
+order by ride_length desc
+
+-- Min ride length in quarter 1: members vs casual riders
+
+SELECT
+member_casual,
+ride_length
+from `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
+where member_casual = 'member'
+order by ride_length asc
+
+ -- Which days have the highest number of rides in quarter 1: members vs casual riders
+ 
+SELECT
+member_casual, 
+day_of_week AS mode_day_of_week 
+FROM 
+(SELECT
+DISTINCT member_casual, day_of_week, ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY COUNT(day_of_week) DESC) rn
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
+GROUP BY member_casual, day_of_week)
+WHERE
+rn = 1
+ORDER BY
+member_casual DESC 
 
 -- Mode for ride length in quarter 1: members vs casual riders
 
@@ -223,76 +238,6 @@ rn = 1
 ORDER BY
 member_casual DESC
 
--- Most used start station in quarter 1: members vs casual riders 
-
-SELECT
-member_casual,
-start_station_name AS mode_start_station_name
-FROM
-(SELECT
-DISTINCT member_casual, start_station_name, ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY COUNT(start_station_name) DESC) rn
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
-GROUP BY member_casual, start_station_name)
-WHERE
-rn = 1
-ORDER BY
-member_casual DESC
-
--- Most used end station in quarter 1: members vs casual riders
-
-SELECT
-member_casual,
-end_station_name AS mode_end_station_name
-FROM
-(SELECT
-DISTINCT member_casual, end_station_name, ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY COUNT(end_station_name) DESC) rn
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
-GROUP BY member_casual, end_station_name)
-WHERE
-rn = 1
-ORDER BY
-member_casual DESC
-
--- Mode for ride start time in quarter 1: members vs casual riders
-
-SELECT
-member_casual,
-ride_start_time AS mode_ride_start_time
-FROM
-(SELECT
-DISTINCT member_casual, ride_start_time, ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY COUNT(ride_start_time) DESC) rn
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
-GROUP BY member_casual, ride_start_time)
-WHERE
-rn = 1
-ORDER BY
-member_casual DESC
-
--- Mode for ride end time in quarter 1: members vs casual riders
-
-SELECT
-member_casual,
-ride_end_time AS mode_ride_end_time
-FROM
-(SELECT
-DISTINCT member_casual, ride_end_time, ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY COUNT(ride_end_time) DESC) rn
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
-GROUP BY member_casual, ride_end_time)
-WHERE
-rn = 1
-ORDER BY
-member_casual DESC
-
--- Median bike type in quarter 1: members vs casual riders
-
-SELECT
-DISTINCT median_bike_type,
-member_casual,
-FROM
-(SELECT ride_id, member_casual,rideable_type,
-PERCENTILE_DISC(rideable_type, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_bike_type
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
-
 -- Median ride length in quarter 1: members vs casual riders
 
 SELECT
@@ -303,7 +248,7 @@ FROM
 PERCENTILE_DISC(ride_length, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_ride_length
 FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
 
--- Median ride length per month and day in quarter 1: members vs casual riders 
+-- Median ride length per day and month in quarter 1: members vs casual riders
 
 SELECT
 DISTINCT
@@ -323,47 +268,7 @@ FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
 group by median_ride_length, day_of_week, member_casual, ride_month
 order by ride_month, day_of_week
 
--- Median start start station in quarter 1: members vs casual riders 
-
-SELECT
-DISTINCT median_start_station,
-member_casual,
-FROM
-(SELECT ride_id, member_casual,ride_length,
-PERCENTILE_DISC(start_station_name, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_start_station
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
-
--- Median end station in quarter 1: members vs casual riders
-
-SELECT
-DISTINCT median_end_station,
-member_casual,
-FROM
-(SELECT ride_id, member_casual,ride_length,
-PERCENTILE_DISC(end_station_name, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_end_station
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
-
--- Median start time in quarter 1: members vs casual riders
-
-SELECT
-DISTINCT median_start_time,
-member_casual,
-FROM
-(SELECT ride_id, member_casual, ride_start_time,
-PERCENTILE_DISC(ride_start_time, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_start_time
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
-
--- Median end time in quarter 1: members vs casual riders
-
-SELECT
-DISTINCT median_start_time,
-member_casual,
-FROM
-(SELECT ride_id, member_casual, ride_start_time,
-PERCENTILE_DISC(ride_start_time, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_start_time
-FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
-
--- Mean ride length in quarter 1: members vs casual riders
+-- Mean for ride length in quarter 1: members vs casual riders
 
 SELECT
 member_casual,
@@ -372,7 +277,7 @@ FORMAT_TIME('%T', TIME_ADD(TIME '00:00:00', INTERVAL CAST(AVG(TIME_DIFF(ride_len
 FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
 group by member_casual
 
--- Mean ride length per month in quarter 1: members vs casual riders
+-- Mean for ride length per month in quarter 1: members vs casual riders
 
 SELECT
 member_casual,
@@ -382,7 +287,7 @@ FORMAT_TIME('%T', TIME_ADD(TIME '00:00:00', INTERVAL CAST(AVG(TIME_DIFF(ride_len
 FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
 group by member_casual, ride_month
 
--- Mean ride length per day  in quarter 1: members vs casual riders
+-- Mean for ride length per day  in quarter 1: members vs casual riders
 
 SELECT
 member_casual,
@@ -392,7 +297,98 @@ FORMAT_TIME('%T', TIME_ADD(TIME '00:00:00', INTERVAL CAST(AVG(TIME_DIFF(ride_len
 FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
 group by member_casual, day_of_week
 
--- Mean start time in quarter 1: members vs casual riders
+-- Mode for start station in quarter 1: members vs casual riders
+
+SELECT
+member_casual,
+start_station_name AS mode_start_station_name
+FROM
+(SELECT
+DISTINCT member_casual, start_station_name, ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY COUNT(start_station_name) DESC) rn
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
+GROUP BY member_casual, start_station_name)
+WHERE
+rn = 1
+ORDER BY
+member_casual DESC
+
+-- Median for start station in quarter 1: members vs casual riders
+
+SELECT
+DISTINCT median_start_station,
+member_casual,
+FROM
+(SELECT ride_id, member_casual,ride_length,
+PERCENTILE_DISC(start_station_name, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_start_station
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
+
+-- Mean for start station in quarter 1: members vs casual riders
+
+SELECT
+member_casual,
+TIME_ADD(TIME '00:00:00', INTERVAL CAST(AVG(TIME_DIFF(ride_start_time, TIME '00:00:00', SECOND)) AS INT64) SECOND) average_time,
+FORMAT_TIME('%T', TIME_ADD(TIME '00:00:00', INTERVAL CAST(AVG(TIME_DIFF(ride_start_time, TIME '00:00:00', SECOND)) AS INT64) SECOND)) average_time_as_string
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
+group by member_casual
+-- Mode for end station in quarter 1: members vs casual riders
+SELECT
+member_casual,
+end_station_name AS mode_end_station_name
+FROM
+(SELECT
+DISTINCT member_casual, end_station_name, ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY COUNT(end_station_name) DESC) rn
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
+GROUP BY member_casual, end_station_name)
+WHERE
+rn = 1
+ORDER BY
+member_casual DESC
+
+-- Median for end station in quarter 1: members vs casual riders
+
+SELECT
+DISTINCT median_end_station,
+member_casual,
+FROM
+(SELECT ride_id, member_casual,ride_length,
+PERCENTILE_DISC(end_station_name, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_end_station
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
+
+-- Mean for end station in quarter 1: members vs casual riders
+
+SELECT
+member_casual,
+TIME_ADD(TIME '00:00:00', INTERVAL CAST(AVG(TIME_DIFF(ride_end_time, TIME '00:00:00', SECOND)) AS INT64) SECOND) average_time,
+FORMAT_TIME('%T', TIME_ADD(TIME '00:00:00', INTERVAL CAST(AVG(TIME_DIFF(ride_end_time, TIME '00:00:00', SECOND)) AS INT64) SECOND)) average_time_as_string
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
+group by member_casual
+
+-- Mode for start time in quarter 1: members vs casual riders
+
+SELECT
+member_casual,
+ride_start_time AS mode_ride_start_time
+FROM
+(SELECT
+DISTINCT member_casual, ride_start_time, ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY COUNT(ride_start_time) DESC) rn
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
+GROUP BY member_casual, ride_start_time)
+WHERE
+rn = 1
+ORDER BY
+member_casual DESC
+
+-- Median for start time in quarter 1: members vs casual riders
+
+SELECT
+DISTINCT median_start_time,
+member_casual,
+FROM
+(SELECT ride_id, member_casual, ride_start_time,
+PERCENTILE_DISC(ride_start_time, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_start_time
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
+
+-- Mean for start time in quarter 1: members vs casual riders
 
 SELECT
 member_casual,
@@ -401,7 +397,31 @@ FORMAT_TIME('%T', TIME_ADD(TIME '00:00:00', INTERVAL CAST(AVG(TIME_DIFF(ride_sta
 FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
 group by member_casual
 
--- Mean end time in quarter 1: members vs casual riders
+-- Mode for end time in quarter 1: members vs casual riders
+
+SELECT
+member_casual,
+ride_end_time AS mode_ride_end_time
+FROM
+(SELECT
+DISTINCT member_casual, ride_end_time, ROW_NUMBER() OVER (PARTITION BY member_casual ORDER BY COUNT(ride_end_time) DESC) rn
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`
+GROUP BY member_casual, ride_end_time)
+WHERE
+rn = 1
+ORDER BY
+
+-- Median for end time in quarter 1: members vs casual riders
+
+SELECT
+DISTINCT median_start_time,
+member_casual,
+FROM
+(SELECT ride_id, member_casual, ride_start_time,
+PERCENTILE_DISC(ride_start_time, 0.5 IGNORE NULLS) OVER(PARTITION BY member_casual) as median_start_time
+FROM `final_bike_share_2022.QUARTER_1_JAN_FEB_MAR`)
+
+-- Mean for end time in quarter 1: members vs casual riders 
 
 SELECT
 member_casual,

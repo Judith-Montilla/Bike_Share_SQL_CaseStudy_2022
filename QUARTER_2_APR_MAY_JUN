@@ -62,7 +62,7 @@ start_lng,
 end_lat,
 end_lng,
 member_casual
-from `final_bike_share_2022.APR_2022`
+from `final_bike_share_2022.JUN_2022`
 
 
 -- Select columns from Quarter_2_APR_MAY_JUN.sql to preview union of tables

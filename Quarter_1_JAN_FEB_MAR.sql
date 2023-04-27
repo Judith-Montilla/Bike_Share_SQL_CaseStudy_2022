@@ -1,4 +1,4 @@
---  Create Quartery tables using Union: Quarter 1: Jan, Feb, Mar
+-- Create Quarterly tables using Union: Quarter 1: Jan, Feb, Mar
 -- Quarter_1_JAN_FEB_MAR.sql
 
 select

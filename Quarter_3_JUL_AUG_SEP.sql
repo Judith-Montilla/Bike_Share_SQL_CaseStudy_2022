@@ -64,7 +64,7 @@ end_lng,
 member_casual
 from `final_bike_share_2022.SEP_2022`
 
--- Select columns from Quarter_2_APR_MAY_JUN to preview union of tables
+-- Select columns from Quarter_3_JUL_AUG_SEP to preview union of tables
 
 SELECT 
 ride_id,
